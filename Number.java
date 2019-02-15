@@ -7,8 +7,8 @@ public class Number{
         // Implement the getStep method
         String result = "";
         
-        List<intWrapper> openList = new ArrayList<>();
-        List<intWrapper> closedList = new ArrayList<>();
+        ArrayList<intWrapper> openList = new ArrayList<intWrapper>();
+        ArrayList<intWrapper> closedList = new ArrayList<intWrapper>();
         List<intWrapper> successors;
         openList.add(new intWrapper(x, Math.abs(y - x), null));
         
@@ -40,13 +40,6 @@ public class Number{
             G++;
         } while (openList.size() > 0);
 
-        
-        
-        
-
-
-
-
 
 
         return result;
@@ -61,36 +54,6 @@ public class Number{
 
     }
 }
+	
 
-private class intWrapper implements Comparable {
-    public int value;
-    public int F;
-    public intWrapper prev;
 
-    public intWrapper(int value, int F, intWrapper prev) {
-        this.value = value;
-        this.F = F;
-        this.prev = prev;
-    }
-
-    public boolean isInList(List<intWrapper> haystack) {
-        for (intWrapper straw : haystack) {
-            if (value == straw.value) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public int compareTo(intWrapper other) {
-        return (F - other.F);
-    }
-
-    public ArrayList<intWrapper> getSuccessors() {
-        List<intWrapper> successors = new ArrayList<>();
-        successors.add(new intWrapper(curr.value + 1, Integer.MAX_VALUE, curr));
-        successors.add(new intWrapper(curr.value - 1, Integer.MAX_VALUE, curr));
-        successors.add(new intWrapper(curr.value * 3, Integer.MAX_VALUE, curr));
-        successors.add(new intWrapper((int)(Math.pow(curr.value, 2)), Integer.MAX_VALUE, curr));
-    }
-}
