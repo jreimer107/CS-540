@@ -1,0 +1,18 @@
+{
+	"configurations": [
+		{
+			"type": "java",
+			"name": "CodeLens (Launch) - Number",
+			"request": "launch",
+			"mainClass": "Number",
+			"projectName": "CS 540_88f0d247"
+		},
+		{
+			"type": "java",
+			"name": "CodeLens (Launch) - Hanoi",
+			"request": "launch",
+			"mainClass": "Hanoi",
+			"projectName": "CS 540_88f0d247"
+		}
+	]
+}
