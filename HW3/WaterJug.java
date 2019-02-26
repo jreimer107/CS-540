@@ -38,6 +38,11 @@ class State implements Comparable<State> {
 		}
 	}
 
+	public boolean equals(State other) {
+		return this.curr_jug1 == other.curr_jug1 && this.curr_jug1 == other.curr_jug2;
+	}
+
+	@Override
 	public String toString() {
 		return Integer.toString(this.curr_jug1) + Integer.toString(this.curr_jug2);
 	}
@@ -117,16 +122,20 @@ class State implements Comparable<State> {
 	public void printState(int option, int depth) {
 
 		// TO DO: print a State based on option (flag)
-		State[] successors = this.getSuccessors();
 
 		// Collections.sort(succList);
-		for (State succ : successors) {
-			System.out.print(succ);
-			if (option == 2) {
-				System.out.println(" " + Boolean.toString(succ.isGoalState()));
-			} else {
-				System.out.println();
+		if (option <= 2) {
+			State[] successors = this.getSuccessors();
+			for (State succ : successors) {
+				System.out.print(succ);
+				if (option == 2) {
+					System.out.println(" " + Boolean.toString(succ.isGoalState()));
+				} else {
+					System.out.println();
+				}
 			}
+		} else if (option == 3) {
+			UninformedSearch.bfs(this);
 		}
 
 	}
@@ -143,8 +152,31 @@ class State implements Comparable<State> {
 }
 
 class UninformedSearch {
-	private static void bfs(State curr_state) {
+	public static void bfs(State curr_state) {
 		// TO DO: run breadth-first search algorithm
+		TreeSet<State> open = new TreeSet<>();
+		TreeSet<State> closed = new TreeSet<>();
+		open.add(curr_state);
+		while (!open.isEmpty()) {
+			curr_state = open.pollFirst();
+			System.out.print(curr_state);
+			if (curr_state.isGoalState()) {
+				System.out.println(" goal");
+				//Print path
+				break;
+			}
+
+			if (!closed.contains(curr_state)) {
+				State[] successors = curr_state.getSuccessors();
+				for (State successor : successors) {
+					if (!closed.contains(successor))
+						successor.parentPt = curr_state;
+						open.add(successor);
+				}
+				closed.add(curr_state);
+				System.out.println(" " + open.toString() + " " + closed.toString());
+			}
+		}
 	}
 
 	private static void dfs(State curr_state) {
