@@ -151,8 +151,8 @@ class State implements Comparable<State> {
 					System.out.println();
 				}
 			}
-		} else if (option == 3) {
-			UninformedSearch.bfs(this);
+		} else {
+			UninformedSearch.run(this, option, depth);
 		}
 
 	}
@@ -169,11 +169,15 @@ class State implements Comparable<State> {
 }
 
 class UninformedSearch {
-	public static void bfs(State curr_state) {
-		//Create open queue and closed list
+	private static void bfs(State curr_state) {
+		// Create open queue and closed list
+		// LinkedHashSet for uniqueness, easy contains(), and FIFO iterating
 		LinkedHashSet<State> open = new LinkedHashSet<>();
-		LinkedHashSet<State> closed = new LinkedHashSet<>();
+		// HashSet for uniqueness and easy contains()
+		HashSet<State> closed = new HashSet<>();
+
 		open.add(curr_state);
+		System.out.println(curr_state);
 		while (!open.isEmpty()) {
 			// Pop item off of priority queue
 			Iterator<State> i = open.iterator();
@@ -218,15 +222,124 @@ class UninformedSearch {
 	}
 
 	private static void dfs(State curr_state) {
-		// TO DO: run depth-first search algorithm
+		// Stack for LIFO ordering, uniqueness done manually
+		Stack<State> open = new Stack<>();
+		// HashSet for uniqueness and easy contains()
+		HashSet<State> closed = new HashSet<>();
+
+		open.push(curr_state);
+		System.out.println(curr_state);
+		while (!open.isEmpty()) {
+			curr_state = open.pop();
+			System.out.print(curr_state);
+
+			// Check if curr is goal and quit if so
+			if (curr_state.isGoalState()) {
+				break;
+			}
+
+			// If we've already checked this node, continue
+			if (closed.contains(curr_state)) {
+				continue;
+			}
+
+			// Expand current node, get semesters and add to queue
+			State[] successors = curr_state.getSuccessors();
+			for (State successor : successors) {
+				// Only expand nodes that have not been expanded before
+				if (!closed.contains(successor) && !open.contains(successor)) {
+					successor.parentPt = curr_state;
+					open.push(successor);
+				}
+			}
+
+			// Done expanding, add to closed
+			closed.add(curr_state);
+			System.out.println(" " + open.toString() + " " + closed.toString());
+		}
+
+		// Curr state is goal state, print goal and path
+		System.out.println(" goal");
+		// Print path
+		String path = "";
+		while (curr_state.parentPt != null) {
+			path = curr_state.toString() + " " + path;
+			curr_state = curr_state.parentPt;
+		}
+		System.out.println("Path " + curr_state + " " + path);
 	}
 
-	private static void iddfs(State curr_state, int depth) {
-		// TO DO: run IDDFS search algorithm
+	private static void iddfs(State init_state, int depth) {
+		// Stack for LIFO ordering, uniqueness done manually
+		Stack<State> open = new Stack<>();
+		// HashSet for uniqueness and easy contains()
+		HashSet<State> closed = new HashSet<>();
+		boolean foundGoal = false;
+		State curr_state = new State(init_state);
+
+		// For each level of iterative deepening
+		for (int d = 0; d <= depth; d++) {
+			open.push(init_state);
+			System.out.println(d + ":" + init_state);
+			while (!open.isEmpty()) {
+				curr_state = open.pop();
+				System.out.print(d + ":" + curr_state);
+
+				// Check if curr is goal and quit if so
+				if (curr_state.isGoalState()) {
+					foundGoal = true;
+					break;
+				}
+
+				// If we've already checked this node, continue
+				if (closed.contains(curr_state)) {
+					continue;
+				}
+
+				// Only expand if node depth is less than max depth
+				if (curr_state.depth < d) {
+					State[] successors = curr_state.getSuccessors();
+					for (State successor : successors) {
+						// Only expand nodes that have not been expanded before
+						if (!closed.contains(successor) && !open.contains(successor)) {
+							successor.parentPt = curr_state;
+							successor.depth = curr_state.depth + 1;
+							open.push(successor);
+						}
+					}
+				}
+				// Done expanding, add to closed
+				closed.add(curr_state);
+				System.out.println(" " + open.toString() + " " + closed.toString());
+			}
+
+			if (foundGoal)
+				break;
+
+			open.clear();
+			closed.clear();
+		}
+
+		// Curr state is goal state, print goal and path
+		System.out.println(" goal");
+		// Print path
+		String path = "";
+		while (curr_state.parentPt != null) {
+			path = curr_state.toString() + " " + path;
+			curr_state = curr_state.parentPt;
+		}
+		System.out.println("Path " + curr_state + " " + path);
 	}
 
 	public static void run(State curr_state, int option, int depth) {
 		// TO DO: run either bfs, dfs or iddfs according to option (flag)
+		if (option == 3) {
+			bfs(curr_state);
+		} else if (option == 4) {
+			dfs(curr_state);
+		} else {
+			iddfs(curr_state, depth);
+		}
 	}
 }
 
