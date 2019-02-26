@@ -38,8 +38,25 @@ class State implements Comparable<State> {
 		}
 	}
 
-	public boolean equals(State other) {
-		return this.curr_jug1 == other.curr_jug1 && this.curr_jug1 == other.curr_jug2;
+	@Override
+	public boolean equals(Object o) {
+		if (o == this) {
+			return true;
+		} else if (!(o instanceof State)) {
+			return false;
+		}
+
+		State other = (State) o;
+		boolean result = this.curr_jug1 == other.curr_jug1 && this.curr_jug2 == other.curr_jug2;
+		if (!result) {
+			// System.out.println("Not equals:" + this.toString() + " " + other.toString());
+		}
+		return result;
+	}
+
+	@Override
+	public int hashCode() {
+		return this.curr_jug1 + this.curr_jug2;
 	}
 
 	@Override
@@ -153,30 +170,51 @@ class State implements Comparable<State> {
 
 class UninformedSearch {
 	public static void bfs(State curr_state) {
-		// TO DO: run breadth-first search algorithm
-		TreeSet<State> open = new TreeSet<>();
-		TreeSet<State> closed = new TreeSet<>();
+		//Create open queue and closed list
+		LinkedHashSet<State> open = new LinkedHashSet<>();
+		LinkedHashSet<State> closed = new LinkedHashSet<>();
 		open.add(curr_state);
 		while (!open.isEmpty()) {
-			curr_state = open.pollFirst();
+			// Pop item off of priority queue
+			Iterator<State> i = open.iterator();
+			curr_state = i.next();
+			i.remove();
 			System.out.print(curr_state);
+
+			// Check if curr is goal and quit if so
 			if (curr_state.isGoalState()) {
-				System.out.println(" goal");
-				//Print path
 				break;
 			}
 
-			if (!closed.contains(curr_state)) {
-				State[] successors = curr_state.getSuccessors();
-				for (State successor : successors) {
-					if (!closed.contains(successor))
-						successor.parentPt = curr_state;
-						open.add(successor);
-				}
-				closed.add(curr_state);
-				System.out.println(" " + open.toString() + " " + closed.toString());
+			// If we've already checked this node, continue
+			if (closed.contains(curr_state)) {
+				continue;
 			}
+
+			// Expand current node, get semesters and add to queue
+			State[] successors = curr_state.getSuccessors();
+			for (State successor : successors) {
+				// Only expand nodes that have not been expanded before
+				if (!closed.contains(successor)) {
+					successor.parentPt = curr_state;
+					open.add(successor);
+				}
+			}
+
+			// Done expanding, add to closed
+			closed.add(curr_state);
+			System.out.println(" " + open.toString() + " " + closed.toString());
 		}
+
+		// Curr state is goal state, print goal and path
+		System.out.println(" goal");
+		// Print path
+		String path = "";
+		while (curr_state.parentPt != null) {
+			path = curr_state.toString() + " " + path;
+			curr_state = curr_state.parentPt;
+		}
+		System.out.println("Path " + curr_state + " " + path);
 	}
 
 	private static void dfs(State curr_state) {
