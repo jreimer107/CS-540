@@ -1,6 +1,6 @@
 import java.util.*;
 
-class State {
+class State implements Comparable<State> {
 	int cap_jug1;
 	int cap_jug2;
 	int curr_jug1;
@@ -22,24 +22,37 @@ class State {
 	public State(State other) {
 		this.cap_jug1 = other.cap_jug1;
 		this.cap_jug2 = other.cap_jug2;
-		this.curr_jug1 = other.curr_jug2;
+		this.curr_jug1 = other.curr_jug1;
 		this.curr_jug2 = other.curr_jug2;
 		this.goal = other.goal;
 		this.depth = other.depth;
 		this.parentPt = other.parentPt;
 	}
 
+	@Override
+	public int compareTo(State other) {
+		if (this.curr_jug1 != other.curr_jug1) {
+			return Integer.compare(this.curr_jug1, other.curr_jug1);
+		} else {
+			return Integer.compare(this.curr_jug2, other.curr_jug2);
+		}
+	}
+
+	public String toString() {
+		return Integer.toString(this.curr_jug1) + Integer.toString(this.curr_jug2);
+	}
+
 	public State[] getSuccessors() {
 
 		// TO DO: get all successors and return them in proper order
-		List<State> successors = new ArrayList<State>();
-
+		// PriorityQueue<State> successors = new PriorityQueue<>();
+		List<State> successors = new ArrayList<>();
 		// Dump first bucket
+
 		if (this.curr_jug1 != 0) {
 			State e1 = new State(this);
 			e1.curr_jug1 = 0;
 			successors.add(e1);
-			System.out.print("yo");
 		}
 
 		// Dump second bucket
@@ -53,12 +66,14 @@ class State {
 		if (this.curr_jug1 != this.cap_jug1) {
 			State f1 = new State(this);
 			f1.curr_jug1 = this.cap_jug1;
+			successors.add(f1);
 		}
 
 		// Fill second bucket
 		if (this.curr_jug2 != this.cap_jug2) {
 			State f2 = new State(this);
 			f2.curr_jug2 = this.cap_jug2;
+			successors.add(f2);
 		}
 
 		// Pour first bucket into second
@@ -70,7 +85,8 @@ class State {
 				pourAmount = space;
 			}
 			p12.curr_jug1 -= pourAmount;
-			p12.cap_jug2 += pourAmount;
+			p12.curr_jug2 += pourAmount;
+			successors.add(p12);
 		}
 
 		// Pour second bucket into first
@@ -82,30 +98,34 @@ class State {
 				pourAmount = space;
 			}
 			p21.curr_jug2 -= pourAmount;
-			p21.cap_jug1 += pourAmount;
+			p21.curr_jug1 += pourAmount;
+			successors.add(p21);
 		}
 
 		State[] succArray = new State[successors.size()];
-		return successors.toArray(succArray);
+		succArray = successors.toArray(succArray);
+		Arrays.sort(succArray);
+		return succArray;
 	}
 
 	public boolean isGoalState() {
-		boolean isGoal = false;
 		// TO DO: determine if the state is a goal node or not and return boolean
 
-		return isGoal;
+		return this.curr_jug1 == this.goal || this.curr_jug2 == this.goal;
 	}
 
 	public void printState(int option, int depth) {
 
 		// TO DO: print a State based on option (flag)
+		State[] successors = this.getSuccessors();
 
-		if (option == 1) {
-			State[] successors = this.getSuccessors();
-			System.out.println(successors.length);
-			for (State successor : successors) {
-				System.out.println(Integer.toString(successor.curr_jug1) + Integer.toString(successor.curr_jug2));
-				;
+		// Collections.sort(succList);
+		for (State succ : successors) {
+			System.out.print(succ);
+			if (option == 2) {
+				System.out.println(" " + Boolean.toString(succ.isGoalState()));
+			} else {
+				System.out.println();
 			}
 		}
 
