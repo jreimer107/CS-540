@@ -47,11 +47,7 @@ class State implements Comparable<State> {
 		}
 
 		State other = (State) o;
-		boolean result = this.curr_jug1 == other.curr_jug1 && this.curr_jug2 == other.curr_jug2;
-		if (!result) {
-			// System.out.println("Not equals:" + this.toString() + " " + other.toString());
-		}
-		return result;
+		return this.curr_jug1 == other.curr_jug1 && this.curr_jug2 == other.curr_jug2;
 	}
 
 	@Override
@@ -65,12 +61,8 @@ class State implements Comparable<State> {
 	}
 
 	public State[] getSuccessors() {
-
-		// TO DO: get all successors and return them in proper order
-		// PriorityQueue<State> successors = new PriorityQueue<>();
 		List<State> successors = new ArrayList<>();
 		// Dump first bucket
-
 		if (this.curr_jug1 != 0) {
 			State e1 = new State(this);
 			e1.curr_jug1 = 0;
@@ -124,6 +116,7 @@ class State implements Comparable<State> {
 			successors.add(p21);
 		}
 
+		// Convert list to array and sort it
 		State[] succArray = new State[successors.size()];
 		succArray = successors.toArray(succArray);
 		Arrays.sort(succArray);
@@ -131,16 +124,10 @@ class State implements Comparable<State> {
 	}
 
 	public boolean isGoalState() {
-		// TO DO: determine if the state is a goal node or not and return boolean
-
 		return this.curr_jug1 == this.goal || this.curr_jug2 == this.goal;
 	}
 
 	public void printState(int option, int depth) {
-
-		// TO DO: print a State based on option (flag)
-
-		// Collections.sort(succList);
 		if (option <= 2) {
 			State[] successors = this.getSuccessors();
 			for (State succ : successors) {
@@ -157,29 +144,20 @@ class State implements Comparable<State> {
 
 	}
 
-	public String getOrderedPair() {
-		StringBuilder builder = new StringBuilder();
-		builder.append(this.curr_jug1);
-		builder.append(this.curr_jug2);
-		return builder.toString().trim();
-	}
-
-	// TO DO: feel free to add/remove/modify methods/fields
-
 }
 
 class UninformedSearch {
 	private static void bfs(State curr_state) {
 		// Create open queue and closed list
 		// LinkedHashSet for uniqueness, easy contains(), and FIFO iterating
-		LinkedHashSet<State> open = new LinkedHashSet<>();
 		// HashSet for uniqueness and easy contains()
+		LinkedHashSet<State> open = new LinkedHashSet<>();
 		HashSet<State> closed = new HashSet<>();
 
 		open.add(curr_state);
 		System.out.println(curr_state);
 		while (!open.isEmpty()) {
-			// Pop item off of priority queue
+			// Pop item off queue
 			Iterator<State> i = open.iterator();
 			curr_state = i.next();
 			i.remove();
@@ -212,7 +190,6 @@ class UninformedSearch {
 
 		// Curr state is goal state, print goal and path
 		System.out.println(" goal");
-		// Print path
 		String path = "";
 		while (curr_state.parentPt != null) {
 			path = curr_state.toString() + " " + path;
@@ -223,8 +200,8 @@ class UninformedSearch {
 
 	private static void dfs(State curr_state) {
 		// Stack for LIFO ordering, uniqueness done manually
-		Stack<State> open = new Stack<>();
 		// HashSet for uniqueness and easy contains()
+		Stack<State> open = new Stack<>();
 		HashSet<State> closed = new HashSet<>();
 
 		open.push(curr_state);
@@ -260,7 +237,6 @@ class UninformedSearch {
 
 		// Curr state is goal state, print goal and path
 		System.out.println(" goal");
-		// Print path
 		String path = "";
 		while (curr_state.parentPt != null) {
 			path = curr_state.toString() + " " + path;
@@ -271,14 +247,15 @@ class UninformedSearch {
 
 	private static void iddfs(State init_state, int depth) {
 		// Stack for LIFO ordering, uniqueness done manually
-		Stack<State> open = new Stack<>();
 		// HashSet for uniqueness and easy contains()
+		Stack<State> open = new Stack<>();
 		HashSet<State> closed = new HashSet<>();
 		boolean foundGoal = false;
 		State curr_state = new State(init_state);
 
 		// For each level of iterative deepening
 		for (int d = 0; d <= depth; d++) {
+			// Do DFS to that level
 			open.push(init_state);
 			System.out.println(d + ":" + init_state);
 			while (!open.isEmpty()) {
@@ -332,7 +309,6 @@ class UninformedSearch {
 	}
 
 	public static void run(State curr_state, int option, int depth) {
-		// TO DO: run either bfs, dfs or iddfs according to option (flag)
 		if (option == 3) {
 			bfs(curr_state);
 		} else if (option == 4) {
