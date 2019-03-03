@@ -1,7 +1,7 @@
 import java.util.*;
 import java.lang.Math;
 
-class State implements Comparable<State> {
+class State {
 	char[] board;
 	int cost;
 
@@ -10,8 +10,10 @@ class State implements Comparable<State> {
 		this.cost = this.getHeuristicCost();
 	}
 
-	public int compareTo(State other) {
-		return Integer.compare(this.cost, other.cost);
+	public State(char[] arr, int index, int value) {
+		this.board = Arrays.copyOf(arr, arr.length);
+		this.board[index] = (char) (value + '0');
+		this.cost = this.getHeuristicCost();
 	}
 
 	public String toString() {
@@ -35,6 +37,43 @@ class State implements Comparable<State> {
 			hillClimb(iteration, seed);
 		} else if (option == 4) {
 			firstChoiceHillClimb(iteration);
+		} else if (option == 5) {
+			simulatedAnneal(iteration, seed);
+		}
+	}
+
+	private void simulatedAnneal(int iteration, int seed) {
+		Random rng = new Random();
+		if (seed != -1) {
+			rng.setSeed(seed);
+		}
+
+		State move = this;
+		for (int i = 0; i <= iteration; i++) {
+			// Print state of board, quit if solved
+			System.out.println(i + ":" + move + " " + move.cost);
+			if (move.cost == 0) {
+				System.out.println("Solved");
+				return;
+			}
+
+			// Pick random values per assignment description
+			int index = rng.nextInt(7);
+			int value = rng.nextInt(7);
+			double prob = rng.nextDouble();
+
+			// Use random values to move random queen (select random successor)
+			State newMove = new State(move.board, index, value);
+
+			// If new move is better, accept it. Else accept with small probability
+			if (move.cost > newMove.cost) {
+				move = newMove;
+			} else {
+				double p = Math.exp((newMove.cost - move.cost) / (100 - i));
+				if (prob < p) {
+					move = newMove;
+				}
+			}
 		}
 	}
 
@@ -150,12 +189,8 @@ class State implements Comparable<State> {
 			for (int row = 0; row < 8; row++) {
 				// Dont add self to successors
 				if (getRow(col) != row) {
-					// New array that is copy of current board
-					char[] newBoard = this.board.clone();
 					// Move one peice
-					newBoard[col] = (char) (row + '0');
-					State successor = new State(newBoard);
-					successors.add(successor);
+					successors.add(new State(this.board, col, row));
 				}
 			}
 		}
