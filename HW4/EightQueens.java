@@ -1,20 +1,55 @@
 import java.util.*;
 import java.lang.Math;
 
-class State {
+class State implements Comparable<State> {
 	char[] board;
+	int cost;
 
 	public State(char[] arr) {
 		this.board = Arrays.copyOf(arr, arr.length);
+		this.cost = this.getHeuristicCost();
+	}
+
+	public int compareTo(State other) {
+		return Integer.compare(this.cost, other.cost);
+	}
+
+	public String toString() {
+		return new String(this.board);
 	}
 
 	public void printState(int option, int iteration, int seed) {
 
 		// TO DO: print output based on option (flag)
 		if (option == 1) {
-			System.out.println(this.getHeuristicCost());
+			System.out.println(cost);
+		} else if (option == 2) {
+			State[] minSuccessors = getBestSucessors();
+			if (minSuccessors.length > 0) {
+				for (State succ : minSuccessors) {
+					System.out.println(succ);
+				}
+				System.out.println(minSuccessors[0].cost);
+			}
 		}
 
+	}
+
+	private State[] getBestSucessors() {
+		int minCost = this.cost;
+		List<State> minSuccessors = new ArrayList<>();
+		for (State succ : getSuccessors()) {
+			if (succ.cost < minCost) {
+				minCost = succ.cost;
+				minSuccessors.clear();
+				minSuccessors.add(succ);
+				// System.out.println(minSuccessors);
+			} else if (succ.cost == minCost) {
+				minSuccessors.add(succ);
+			}
+		}
+		State[] minArray = new State[minSuccessors.size()];
+		return minSuccessors.toArray(minArray);
 	}
 
 	// TO DO: feel free to add/remove/modify methods/fields
@@ -55,6 +90,26 @@ class State {
 
 	private int getRow(int col) {
 		return Character.getNumericValue(board[col]);
+	}
+
+	// Need to update heuristic cost
+	private State[] getSuccessors() {
+		List<State> successors = new ArrayList<>();
+		for (int col = 0; col < 8; col++) {
+			for (int row = 0; row < 8; row++) {
+				// Dont add self to successors
+				if (getRow(col) != row) {
+					// New array that is copy of current board
+					char[] newBoard = this.board.clone();
+					// Move one peice
+					newBoard[col] = (char) (row + '0');
+					State successor = new State(newBoard);
+					successors.add(successor);
+				}
+			}
+		}
+		State[] succArr = new State[successors.size()];
+		return successors.toArray(succArr);
 	}
 
 }
