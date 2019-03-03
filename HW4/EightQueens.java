@@ -31,8 +31,61 @@ class State implements Comparable<State> {
 				}
 				System.out.println(minSuccessors[0].cost);
 			}
+		} else if (option == 3) {
+			hillClimb(iteration, seed);
+		} else if (option == 4) {
+			firstChoiceHillClimb(iteration);
+		}
+	}
+
+	private void firstChoiceHillClimb(int iteration) {
+		State move = this;
+		for (int i = 0; i <= iteration; i++) {
+			// Print status of board, quit if solved
+			System.out.println(i + ":" + move + " " + move.cost);
+			if (move.cost == 0) {
+				System.out.println("Solved");
+				return;
+			}
+
+			// Look for a successor in a better state. If found, move there.
+			boolean foundBetterSucc = false;
+			for (State succ : move.getSuccessors()) {
+				if (succ.cost < move.cost) {
+					move = succ;
+					foundBetterSucc = true;
+					break;
+				}
+			}
+
+			// If we have not found a better state, are in local optimum
+			if (!foundBetterSucc) {
+				System.out.println("Local optimum");
+				return;
+			}
+		}
+	}
+
+	private void hillClimb(int iteration, int seed) {
+		Random rng = new Random();
+		if (seed != -1) {
+			rng.setSeed(seed);
 		}
 
+		State move = this;
+		for (int i = 0; i <= iteration; i++) {
+			// Print status of board, quit if solved
+			System.out.println(i + ":" + move + " " + move.cost);
+			if (move.cost == 0) {
+				System.out.println("Solved");
+				return;
+			}
+
+			// Move one peice
+			State[] successors = move.getBestSucessors();
+			int r = rng.nextInt(successors.length);
+			move = successors[r];
+		}
 	}
 
 	private State[] getBestSucessors() {
@@ -43,7 +96,6 @@ class State implements Comparable<State> {
 				minCost = succ.cost;
 				minSuccessors.clear();
 				minSuccessors.add(succ);
-				// System.out.println(minSuccessors);
 			} else if (succ.cost == minCost) {
 				minSuccessors.add(succ);
 			}
@@ -52,7 +104,6 @@ class State implements Comparable<State> {
 		return minSuccessors.toArray(minArray);
 	}
 
-	// TO DO: feel free to add/remove/modify methods/fields
 	private int getHeuristicCost() {
 		int cost = 0;
 		for (int queen = 0; queen < 8; queen++) {
