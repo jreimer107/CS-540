@@ -30,6 +30,14 @@ class CounterSource:
             self.numSources += 1
 
 
+def dot_product(A, B):
+    return sum(i[0] * i[1] for i in zip(A, B))
+
+
+def cosine_similarity(A, B):
+    return dot_product(A, B) / (math.sqrt(dot_product(A, A)) * math.sqrt(dot_product(B, B)))
+
+
 def count_all_words():
     ctr = {}
     for filename in os.listdir('news'):
@@ -53,15 +61,15 @@ def rc():
                 ctr[word] += 1
 
     print(sum(ctr.values()))
+    print(len(ctr.items()))
     print(ctr.most_common(20))
 
+    #reorganize data to be by most common
     rc_data = []
     ordered_keys = []
-    i = 0
     for word in ctr.most_common():
         ordered_keys.append(word[0])
         rc_data.append(word[1])
-        i += 1
 
     # RC plot
     # Shows that there are only a few words that are used many times,
@@ -113,13 +121,14 @@ def analyze_file(filename, all_words):
 def vector_compare():
     all_ctr = count_all_words()
     v1_bow, v1_tf_idf = analyze_file('098.txt', all_ctr)
-    print(v1_bow.most_common(10))
-    print(v1_tf_idf.most_common(10))
-    # v2_bow, v2_tf_idf = analyze_file('297.txt', list(count_all_words().keys()))
+    v2_bow, v2_tf_idf = analyze_file('297.txt', all_ctr)
+
+    print(cosine_similarity(v1_bow.values(), v2_bow.values()))
+    print(cosine_similarity(v1_tf_idf.values(), v2_tf_idf.values()))
 
 
 def main():
-    # rc()
+    #rc()
     # tf_idf()
     vector_compare()
 
