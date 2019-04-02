@@ -1,5 +1,4 @@
 import numpy
-import math
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -49,9 +48,9 @@ with open('cardata.csv', 'r') as file:
         line_num += 1
 
 
-plt.scatter(minivan_x, minivan_y, label='minivan', marker=',', linewidths=0, s=1)
-plt.scatter(sedan_x, sedan_y, label='sedan', marker=',', linewidths=0, s=1)
-plt.scatter(suv_x, suv_y, label='suv', marker=',', linewidths=0, s=1)
+plt.scatter(minivan_x, minivan_y, label='minivan', marker='^', linewidths=0, s=1)
+plt.scatter(sedan_x, sedan_y, label='sedan', marker='^', linewidths=0, s=1)
+plt.scatter(suv_x, suv_y, label='suv', marker='v', linewidths=0, s=1)
 plt.xlabel('PCA1: Retail($)')
 plt.ylabel('PCA2: Dealer($)')
 plt.legend()
