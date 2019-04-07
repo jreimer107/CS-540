@@ -29,24 +29,54 @@ public class Chatbot {
         ArrayList<Integer> corpus = readCorpus();
         int flag = Integer.valueOf(args[0]);
 
+        int v = 4700;
+        DecimalFormat df = new DecimalFormat("#.#######");
+
+        int counts[] = new int[v];
+        double probs[] = new double[v];
+
+        for (int i = 0; i < corpus.size(); i++) {
+            counts[corpus.get(i)]++;
+        }
+        for (int i = 0; i < v; i++) {
+            probs[i] = (counts[i] + 1) / (double) (corpus.size() + v);
+        }
         if (flag == 100) {
             int w = Integer.valueOf(args[1]);
-            int count = 0;
-            for (int token : corpus) {
-                if (token == w) {
-                    count++;
-                }
-            }
-            double prob = count / (double) corpus.size();
-            DecimalFormat df = new DecimalFormat("#.#######");
+            // int count = 0;
+            // for (int token : corpus) {
+            // if (token == w) {
+            // count++;
+            // }
+            // }
 
-            System.out.println(count);
-            System.out.println(df.format(prob));
+            
+            System.out.println(counts[w]);
+            System.out.println(df.format(probs[w]));
 
         } else if (flag == 200) {
             int n1 = Integer.valueOf(args[1]);
             int n2 = Integer.valueOf(args[2]);
-            // TODO generate
+
+            double r = n1 / (double) n2;
+
+            // Get li
+            double intervalSize = 1 / (double) v;
+            System.out.println(intervalSize);
+            int interval = (int) (r / intervalSize);
+
+            double li = 0;
+            double ri = 0;
+            for (int j = 0; j < interval; j++) {
+                li += probs[j];
+            }
+
+            // ri is just the one extra probability
+            ri = li + probs[interval];
+
+            System.out.println(interval);
+            System.out.println(df.format(li));
+            System.out.println(df.format(ri));
 
         } else if (flag == 300) {
             int h = Integer.valueOf(args[1]);

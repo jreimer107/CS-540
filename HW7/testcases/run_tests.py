@@ -32,7 +32,7 @@ def run(part):
 				passed = False
 				print('Test case', test_case, 'failed')
 		else:
-			print('Plese provide sample output for', test_case)
+			print('Please provide sample output for', test_case)
 			passed = False
 
 	if passed:
