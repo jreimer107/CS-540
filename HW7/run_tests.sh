@@ -5,7 +5,7 @@ source ~/.bashrc
 
 alias java="java.exe"
 alias javac="javac.exe"
-alias python="python.exe"
+#alias python="python.exe"
 
 doOnly="$1"
 
@@ -32,4 +32,4 @@ for testcase in $testcases; do
 done
 
 cd testcases
-python run_tests.py $doOnly
+python3 run_tests.py $doOnly
