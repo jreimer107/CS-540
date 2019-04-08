@@ -31,6 +31,8 @@ public class Chatbot {
 
         int v = 4700;
         DecimalFormat df = new DecimalFormat("0.0000000");
+        Integer[] corpusArray = new Integer[corpus.size()];
+        corpus.toArray(corpusArray);
 
         if (flag == 100) {
             int w = Integer.valueOf(args[1]);
@@ -50,29 +52,9 @@ public class Chatbot {
             int n2 = Integer.valueOf(args[2]);
 
             double r = n1 / (double) n2;
+            int[] history = {};
 
-            int counts[] = new int[v];
-            double probs[] = new double[v];
-
-            for (int i = 0; i < corpus.size(); i++) {
-                counts[corpus.get(i)]++;
-            }
-            for (int i = 0; i < v; i++) {
-                probs[i] = (counts[i] + 1) / (double) (corpus.size() + v);
-            }
-
-            // Get li and ri
-            double li = 0;
-            double ri = probs[0];
-            int j = 1;
-            while (ri < r && j < v) {
-                li = ri;
-                ri += probs[j++];
-            }
-
-            System.out.println(j - 1);
-            System.out.println(df.format(li));
-            System.out.println(df.format(ri));
+            ngram(r, history, corpusArray, v).print();
 
         } else if (flag == 300) {
             int h = Integer.valueOf(args[1]);
@@ -99,33 +81,9 @@ public class Chatbot {
             int h = Integer.valueOf(args[3]);
 
             double r = n1 / (double) n2;
+            int[] history = { h };
 
-            int counts[] = new int[v];
-            double probs[] = new double[v];
-
-            int hcount = 0;
-            for (int i = 0; i < corpus.size() - 1; i++) {
-                if (corpus.get(i) == h) {
-                    hcount++;
-                    counts[corpus.get(i + 1)]++;
-                }
-            }
-            for (int i = 0; i < v; i++) {
-                probs[i] = (counts[i] + 1) / (double) (hcount + v);
-            }
-
-            // Get li and ri
-            double li = 0;
-            double ri = probs[0];
-            int j = 1;
-            while (ri < r && j < v) {
-                li = ri;
-                ri += probs[j++];
-            }
-
-            System.out.println(j - 1);
-            System.out.println(df.format(li));
-            System.out.println(df.format(ri));
+            ngram(r, history, corpusArray, v).print();
 
         } else if (flag == 500) {
             int h1 = Integer.valueOf(args[1]);
@@ -155,33 +113,9 @@ public class Chatbot {
             int h2 = Integer.valueOf(args[4]);
 
             double r = n1 / (double) n2;
+            int[] history = { h1, h2 };
 
-            int counts[] = new int[v];
-            double probs[] = new double[v];
-
-            int hhcount = 0;
-            for (int i = 0; i < corpus.size() - 1; i++) {
-                if (corpus.get(i) == h1 && corpus.get(i + 1) == h2) {
-                    hhcount++;
-                    counts[corpus.get(i + 2)]++;
-                }
-            }
-            for (int i = 0; i < v; i++) {
-                probs[i] = (counts[i] + 1) / (double) (hhcount + v);
-            }
-
-            // Get li and ri
-            double li = 0;
-            double ri = probs[0];
-            int j = 1;
-            while (ri < r && j < v) {
-                li = ri;
-                ri += probs[j++];
-            }
-
-            System.out.println(j - 1);
-            System.out.println(df.format(li));
-            System.out.println(df.format(ri));
+            ngram(r, history, corpusArray, v).print();
 
         } else if (flag == 700) {
             int seed = Integer.valueOf(args[1]);
@@ -193,20 +127,28 @@ public class Chatbot {
                 rng.setSeed(seed);
 
             if (t == 0) {
-                // TODO Generate first word using r
+                // Generate first word using r
                 double r = rng.nextDouble();
+                int[] history = {};
+                h1 = ngram(r, history, corpusArray, v).pos;
+
                 System.out.println(h1);
                 if (h1 == 9 || h1 == 10 || h1 == 12) {
                     return;
                 }
+                history = new int[] { h1 };
 
-                // TODO Generate second word using r
+                // Generate second word using r
                 r = rng.nextDouble();
+                h2 = ngram(r, history, corpusArray, v).pos;
                 System.out.println(h2);
             } else if (t == 1) {
                 h1 = Integer.valueOf(args[3]);
-                // TODO Generate second word using r
+                // Generate second word using r
                 double r = rng.nextDouble();
+                int[] history = { h1 };
+                h2 = ngram(r, history, corpusArray, v).pos;
+
                 System.out.println(h2);
             } else if (t == 2) {
                 h1 = Integer.valueOf(args[3]);
@@ -216,7 +158,9 @@ public class Chatbot {
             while (h2 != 9 && h2 != 10 && h2 != 12) {
                 double r = rng.nextDouble();
                 int w = 0;
-                // TODO Generate new word using h1,h2
+                // Generate new word using h1,h2
+                int[] history = { h1, h2 };
+                w = ngram(r, history, corpusArray, v).pos;
                 System.out.println(w);
                 h1 = h2;
                 h2 = w;
@@ -224,5 +168,66 @@ public class Chatbot {
         }
 
         return;
+    }
+
+    public static PosProbs ngram(double r, int[] history, Integer[] corpus, int vocabSize) {
+        int counts[] = new int[vocabSize];
+        double probs[] = new double[vocabSize];
+
+        // Count number of times entire history appears in corpus
+        int hcount = 0;
+        for (int i = 0; i < corpus.length - history.length; i++) {
+            // Check to see if we find the entire history starting at position i
+            boolean found = true;
+            for (int j = 0; j < history.length; j++) {
+                if (corpus[i + j] != history[j]) {
+                    found = false;
+                    break;
+                }
+            }
+
+            // If history found, increment history count and the count of the word after.
+            if (found) {
+                hcount++;
+                counts[corpus[i + history.length]]++;
+            }
+        }
+
+        // Now that we have the counts, use laplace smoothing to find probabilities
+        for (int i = 0; i < vocabSize; i++) {
+            probs[i] = (counts[i] + 1) / (double) (hcount + vocabSize);
+        }
+
+        // Get lower and higher probabilities and position of random number r
+        double li = 0;
+        double ri = probs[0];
+        int j = 1;
+        while (ri < r && j < vocabSize) {
+            li = ri;
+            ri += probs[j++];
+        }
+
+        // Return wrapper object for the probabilities and position
+        return new PosProbs(j - 1, li, ri);
+    }
+}
+
+// Wrapper object for a position and the lower and higher probabilities.
+class PosProbs {
+    public int pos;
+    public double lowerProb;
+    public double higherProb;
+
+    public PosProbs(int pos, double lowerProb, double higherProb) {
+        this.pos = pos;
+        this.lowerProb = lowerProb;
+        this.higherProb = higherProb;
+    }
+
+    public void print() {
+        DecimalFormat df = new DecimalFormat("0.0000000");
+        System.out.println(this.pos);
+        System.out.println(df.format(this.lowerProb));
+        System.out.println(df.format(this.higherProb));
     }
 }
