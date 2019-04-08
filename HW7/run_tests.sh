@@ -19,15 +19,12 @@ for testcase in $testcases; do
         if [ ! -z $doOnly ]; then
             if [[ $(echo $args | awk '{print $1}') -lt $doOnly ]]; then
                 continue
+            elif [[ $(echo $args | awk '{print $1}') -gt $doOnly ]]; then
+                break
             fi
         fi
         java Chatbot $args > testcases/$testcase.out
         echo "did $args"
-		if [ ! -z $doOnly ]; then
-            if [[ $(echo $args | awk '{print $1}') -gt $doOnly ]]; then
-                break
-            fi
-        fi
     fi
 done
 

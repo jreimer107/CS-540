@@ -153,7 +153,36 @@ public class Chatbot {
             int n2 = Integer.valueOf(args[2]);
             int h1 = Integer.valueOf(args[3]);
             int h2 = Integer.valueOf(args[4]);
-            // TODO
+
+            double r = n1 / (double) n2;
+
+            int counts[] = new int[v];
+            double probs[] = new double[v];
+
+            int hhcount = 0;
+            for (int i = 0; i < corpus.size() - 1; i++) {
+                if (corpus.get(i) == h1 && corpus.get(i + 1) == h2) {
+                    hhcount++;
+                    counts[corpus.get(i + 2)]++;
+                }
+            }
+            for (int i = 0; i < v; i++) {
+                probs[i] = (counts[i] + 1) / (double) (hhcount + v);
+            }
+
+            // Get li and ri
+            double li = 0;
+            double ri = probs[0];
+            int j = 1;
+            while (ri < r && j < v) {
+                li = ri;
+                ri += probs[j++];
+            }
+
+            System.out.println(j - 1);
+            System.out.println(df.format(li));
+            System.out.println(df.format(ri));
+
         } else if (flag == 700) {
             int seed = Integer.valueOf(args[1]);
             int t = Integer.valueOf(args[2]);
