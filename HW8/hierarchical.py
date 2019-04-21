@@ -83,17 +83,3 @@ while len(clusters) > cities_wanted:
 
 for cluster in clusters:
     print(cluster)
-
-# for i in range(len(nodes)):
-#     for j in range(i, len(nodes)):
-#         node1 = nodes[i]
-#         node2 = nodes[j]
-#         distances[i][j] = round(
-#             math.sqrt(math.pow(node1[0]-node2[0], 2) + math.pow(node1[1]-node2[1], 2)), 2)
-
-# print(i, ' ', j, ' ', math.sqrt(
-#     math.pow(node1[0]-node2[0], 2) + math.pow(node1[1]-node2[1], 2)))
-# print(distances)
-# with open("distances.csv", "w+") as file:
-#     csvWriter = csv.writer(file, delimiter=',')
-#     csvWriter.writerows(distances)
