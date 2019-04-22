@@ -30,7 +30,7 @@ public class BodyVsBrain {
 			double body_mean = getMean(body);
 			double body_stdDev = getStdDev(body, body_mean);
 			double brain_mean = getMean(brain);
-			double brain_stdDev = getStdDev(body, brain_mean);
+			double brain_stdDev = getStdDev(brain, brain_mean);
 			System.out.println(body.size());
 			System.out.println(df.format(body_mean) + " " + df.format(body_stdDev));
 			System.out.println(df.format(brain_mean) + " " + df.format(brain_stdDev));
@@ -44,8 +44,8 @@ public class BodyVsBrain {
 			double b0_MSE = 0.0;
 			double b1_MSE = 0.0;
 			for (int i = 0; i < body.size(); i++) {
-				b0_MSE += b0 + b1 * body.get(i) - brain.get(i);
-				b1_MSE += (b0 + b1 * body.get(i) - brain.get(i)) * body.get(i);
+				b0_MSE += B0_MSE(body.get(i), brain.get(i), b0, b1);
+				b1_MSE += B1_MSE(body.get(i), brain.get(i), b0, b1);
 			}
 			b0_MSE = 2 * b0_MSE / body.size();
 			b1_MSE = 2 * b1_MSE / body.size();
@@ -62,11 +62,11 @@ public class BodyVsBrain {
 				double b0_MSE = 0.0;
 				double b1_MSE = 0.0;
 				for (int i = 0; i < body.size(); i++) {
-					b0_MSE += b0 + b1 * body.get(i) - brain.get(i);
-					b1_MSE += (b0 + b1 * body.get(i) - brain.get(i)) * body.get(i);
+					b0_MSE += B0_MSE(body.get(i), brain.get(i), b0, b1);
+					b1_MSE += B1_MSE(body.get(i), brain.get(i), b0, b1);
 				}
-				b0 -= n * (2 * b0_MSE / body.size());
-				b1 -= n * (2 * b1_MSE / body.size());
+				b0 -= GradientDescent(n, b0_MSE, body.size());
+				b1 -= GradientDescent(n, b1_MSE, body.size());
 
 				System.out.println(
 						t + " " + df.format(b0) + " " + df.format(b1) + " " + df.format(MSE(body, brain, b0, b1)));
@@ -90,25 +90,43 @@ public class BodyVsBrain {
 			double _brain = cfb0 + cfb1 * _body;
 			System.out.println(df.format(_brain));
 		} else if (FLAG == 700) {
-			// Git merge
-		} else if (FLAG == 800) {
-			Random rng = new Random();
-			double body_mean = getMean(body);
-			double body_std = getStdDev(body, body_mean);
-
 			double n = Double.parseDouble(args[1]);
 			int T = Integer.parseInt(args[2]);
 
+			Standardize(body);
+			
 			double b0 = 0.0;
 			double b1 = 0.0;
 			for (int t = 1; t <= T; t++) {
+				double b0_MSE = 0.0;
+				double b1_MSE = 0.0;
+				for (int i = 0; i < body.size(); i++) {
+					b0_MSE += B0_MSE(body.get(i), brain.get(i), b0, b1);
+					b1_MSE += B1_MSE(body.get(i), brain.get(i), b0, b1);
+				}
+				b0 -= GradientDescent(n, b0_MSE, body.size());
+				b1 -= GradientDescent(n, b1_MSE, body.size());
+
+				System.out.println(
+						t + " " + df.format(b0) + " " + df.format(b1) + " " + df.format(MSE(body, brain, b0, b1)));
+			}
+		} else if (FLAG == 800) {
+			double n = Double.parseDouble(args[1]);
+			int T = Integer.parseInt(args[2]);
+
+			Standardize(body);
+
+			double b0 = 0.0;
+			double b1 = 0.0;
+			Random rng = new Random();
+			for (int t = 1; t <= T; t++) {
 				int randJ = rng.nextInt(body.size());
-				double randBodyStd = (body.get(randJ) - body_mean) / body_std;
+				double randBody = body.get(randJ);
 				double randBrain = brain.get(randJ);
-				double b0_MSE = b0 + b1 * randBodyStd - randBrain;
-				double b1_MSE = (b0 + b1 * randBodyStd - randBrain) * randBodyStd;
-				b0 -= n * (2 * b0_MSE / body.size());
-				b1 -= n * (2 * b1_MSE / body.size());
+				double b0_MSE = B0_MSE(randBody, randBrain, b0, b1);
+				double b1_MSE = B1_MSE(randBody, randBrain, b0, b1);
+				b0 -= GradientDescent(n, b0_MSE, body.size());
+				b1 -= GradientDescent(n, b1_MSE, body.size());
 
 				System.out.println(
 						t + " " + df.format(b0) + " " + df.format(b1) + " " + df.format(MSE(body, brain, b0, b1)));
@@ -144,6 +162,26 @@ public class BodyVsBrain {
 			sum += Math.pow(b0 + b1 * x.get(i) - y.get(i), 2);
 		}
 		return sum / x.size();
+	}
+
+	private static void Standardize(ArrayList<Double> x) {
+		double x_mean = getMean(x);
+		double x_std = getStdDev(x, x_mean);
+		for (int i = 0; i < x.size(); i++) {
+			x.set(i, (x.get(i) - x_mean) / x_std);
+		}
+	}
+
+	private static double B0_MSE(double x, double y, double b0, double b1) {
+		return b0 + b1 * x - y;
+	}
+
+	private static double B1_MSE(double x, double y, double b0, double b1) {
+		return (b0 + b1 * x - y) * x;
+	}
+
+	private static double GradientDescent(double n, double b_mse, int size) {
+		return n * (2 * b_mse / size);
 	}
 
 	private static double ClosedFormB1(ArrayList<Double> x, ArrayList<Double> y, double x_mean, double y_mean) {
