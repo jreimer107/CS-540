@@ -80,7 +80,7 @@ public class BodyVsBrain {
 			double cfb0 = ClosedFormB0(body_mean, brain_mean, cfb1);
 			System.out.println(cfb0 + " " + cfb1 + " " + MSE(body, brain, cfb0, cfb1));
 		} else if (FLAG == 600) {
-			double _body = Double.parseDouble(args[0]);
+			double _body = Double.parseDouble(args[1]);
 
 			double body_mean = getMean(body);
 			double brain_mean = getMean(brain);
@@ -89,6 +89,30 @@ public class BodyVsBrain {
 
 			double _brain = cfb0 + cfb1 * _body;
 			System.out.println(df.format(_brain));
+		} else if (FLAG == 700) {
+			// Git merge
+		} else if (FLAG == 800) {
+			Random rng = new Random();
+			double body_mean = getMean(body);
+			double body_std = getStdDev(body, body_mean);
+
+			double n = Double.parseDouble(args[1]);
+			int T = Integer.parseInt(args[2]);
+
+			double b0 = 0.0;
+			double b1 = 0.0;
+			for (int t = 1; t <= T; t++) {
+				int randJ = rng.nextInt(body.size());
+				double randBodyStd = (body.get(randJ) - body_mean) / body_std;
+				double randBrain = brain.get(randJ);
+				double b0_MSE = b0 + b1 * randBodyStd - randBrain;
+				double b1_MSE = (b0 + b1 * randBodyStd - randBrain) * randBodyStd;
+				b0 -= n * (2 * b0_MSE / body.size());
+				b1 -= n * (2 * b1_MSE / body.size());
+
+				System.out.println(
+						t + " " + df.format(b0) + " " + df.format(b1) + " " + df.format(MSE(body, brain, b0, b1)));
+			}
 		}
 
 	}
@@ -106,7 +130,7 @@ public class BodyVsBrain {
 		for (double item : items) {
 			stdDev += Math.pow(item - mean, 2);
 		}
-		return Math.sqrt(stdDev / items.size());
+		return Math.sqrt(stdDev / (items.size() - 1));
 	}
 
 	private static double MSE(ArrayList<Double> x, ArrayList<Double> y, double b0, double b1) {
