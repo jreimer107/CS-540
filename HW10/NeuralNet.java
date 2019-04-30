@@ -1,11 +1,10 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
 
 class NeuralNet {
-
-	// static Perceptron[] input_layer = new Perceptron[5];
-	// static Perceptron[] hidden_layer = new Perceptron[3];
-	// static Perceptron output_layer = new Perceptron();
 
 	static Layer input_layer = new Layer(4);
 	static Layer hidden_layer = new Layer(2);
@@ -16,11 +15,8 @@ class NeuralNet {
 		DecimalFormat df = new DecimalFormat("0.00000");
 
 		int arg_index = 1;
-		// double[] output_errors = new double[output_layer.size()];
-		// double[] hidden_errors = new double[hidden_layer.size()];
-		// double[] input_errors = new double[input_layer.size()];
 
-		// Arg parsing
+		// Set initial weights based on args
 		for (Perceptron hidden : hidden_layer) {
 			for (Perceptron input : input_layer.All()) {
 				input.SetWeight(hidden, Double.parseDouble(args[arg_index++]));
@@ -29,27 +25,109 @@ class NeuralNet {
 		for (Perceptron hidden : hidden_layer.All()) {
 			hidden.SetWeight(output_layer.get(0), Double.parseDouble(args[arg_index++]));
 		}
-		for (Perceptron input : input_layer) {
-			input.activation = Double.parseDouble(args[arg_index++]);
+
+		ArrayList<Double[]> training_inputs = new ArrayList<Double[]>();
+		ArrayList<Double[]> training_outputs = new ArrayList<Double[]>();
+		ArrayList<Double[]> eval_inputs = new ArrayList<Double[]>();
+		ArrayList<Double[]> eval_outputs = new ArrayList<Double[]>();
+		if (flag < 500) {
+			Double[] arg_inputs = new Double[input_layer.size()];
+			for (int i = 0; i < input_layer.size(); i++) {
+				arg_inputs[i] = Double.parseDouble(args[arg_index++]);
+			}
+			training_inputs.add(arg_inputs);
+			Double[] single_output = { Double.parseDouble(args[args.length - 1]) };
+			training_outputs.add(single_output);
+		} else {
+			// Read in training data
+			try (BufferedReader br = new BufferedReader(new FileReader("train.csv"))) {
+				String line;
+				while ((line = br.readLine()) != null) {
+					String[] data = line.split(",");
+					Double[] input = new Double[input_layer.size()];
+					Double[] output = new Double[output_layer.size()];
+					int data_pointer = 0;
+					for (int i = 0; i < input_layer.size(); i++) {
+						input[i] = Double.parseDouble(data[data_pointer++]);
+					}
+					for (int i = 0; i < output_layer.size(); i++) {
+						output[i] = Double.parseDouble(data[data_pointer++]);
+					}
+					training_inputs.add(input);
+					training_outputs.add(output);
+				}
+			} catch (IOException e) {
+				System.err.println("IO Exception thrown.");
+				e.printStackTrace();
+				return;
+			}
+
+			// Read in eval data
+			String eval_file = "eval.csv";
+			if (flag == 600) {
+				eval_file = "test.csv";
+			}
+			try (BufferedReader br = new BufferedReader(new FileReader(eval_file))) {
+				String line;
+				while ((line = br.readLine()) != null) {
+					String[] data = line.split(",");
+					Double[] input = new Double[input_layer.size()];
+					Double[] output = new Double[output_layer.size()];
+					int data_pointer = 0;
+					for (int i = 0; i < input_layer.size(); i++) {
+						input[i] = Double.parseDouble(data[data_pointer++]);
+					}
+					for (int i = 0; i < output_layer.size(); i++) {
+						output[i] = Double.parseDouble(data[data_pointer++]);
+					}
+					eval_inputs.add(input);
+					eval_outputs.add(output);
+				}
+			} catch (IOException e) {
+				System.err.println("IO Exception thrown.");
+				e.printStackTrace();
+				return;
+			}
 		}
 
-		// Activation calculation
-		input_layer.UpdateActivations();
-		hidden_layer.UpdateActivations();
-		output_layer.UpdateActivations();
+		// Train
+		for (int i = 0; i < training_inputs.size(); i++) {
+			Run(training_inputs.get(i), training_outputs.get(i));
 
-		// Set output errors based on expected values
-		for (Perceptron p : output_layer) {
-			p.error = OutputPDError(Double.parseDouble(args[args.length - 1]), p.activation);
+			if (flag <= 400) {
+				break;
+			}
+
+			// Adjust weights based on errors
+			double n = Double.parseDouble(args[args.length - 1]);
+			output_layer.AdjustWeights(n);
+			hidden_layer.AdjustWeights(n);
+
+			if (flag == 500) {
+				double e_eval = 0;
+				for (int j = 0; j < eval_inputs.size(); j++) {
+					Run(eval_inputs.get(j), eval_outputs.get(j));
+					for (int k = 0; k < output_layer.size(); k++) {
+						e_eval += GetError(eval_outputs.get(j)[k], output_layer.get(k).activation);
+					}
+				}
+
+				// Printing
+				ArrayList<String> weights = new ArrayList<String>();
+				for (Perceptron hidden : hidden_layer) {
+					for (Perceptron input : input_layer.All()) {
+						weights.add(df.format(input.GetWeight(hidden)));
+					}
+				}
+				for (Perceptron output : output_layer) {
+					for (Perceptron hidden : hidden_layer.All()) {
+						weights.add(df.format(hidden.GetWeight(output)));
+					}
+				}
+				System.out.println(String.join(" ", weights));
+				System.out.println(df.format(e_eval));
+			}
 		}
-
-		// Calculate activation errors
-		hidden_layer.UpdateErrors();
-		input_layer.UpdateErrors();
-
-		// Calculate Weight Errors
-		output_layer.UpdateWeightErrors();
-		hidden_layer.UpdateWeightErrors();
 
 		// Printing
 		if (flag == 100) {
@@ -86,7 +164,52 @@ class NeuralNet {
 				}
 				System.out.println(String.join(" ", hidden_errors));
 			}
+		} else if (flag == 600) {
+			// Test
+			int numCorrect = 0;
+			int numTests = 0;
+			for (int i = 0; i < eval_inputs.size(); i++) {
+				Run(eval_inputs.get(i), eval_outputs.get(i));
+				int expected = (int) (double) eval_outputs.get(i)[0];
+				double confidence = output_layer.get(0).activation;
+				int prediction = (int) Math.round(confidence);
+				if (expected == prediction) {
+					numCorrect++;
+				}
+				numTests++;
+				System.out.println(expected + " " + prediction + " " + df.format(confidence));
+			}
+
+			//Print accuracy
+			df = new DecimalFormat("0.00");
+			System.out.println(df.format(numCorrect / (double) numTests));
 		}
+	}
+
+	public static void Run(Double[] inputs, Double[] expected_outputs) {
+		// Set inputs
+		for (int i = 0; i < input_layer.size(); i++) {
+			input_layer.get(i).activation = inputs[i];
+		}
+
+		// Activation calculation
+		input_layer.UpdateActivations();
+		hidden_layer.UpdateActivations();
+		output_layer.UpdateActivations();
+
+		// Set output errors based on expected value args
+		for (int i = 0; i < output_layer.size(); i++) {
+			Perceptron p = output_layer.get(i);
+			p.error = OutputPDError(expected_outputs[i], p.activation);
+		}
+
+		// Calculate activation errors
+		hidden_layer.UpdateErrors();
+		input_layer.UpdateErrors();
+
+		// Calculate Weight Errors
+		output_layer.UpdateWeightErrors();
+		hidden_layer.UpdateWeightErrors();
 	}
 
 	public static double sigmoid(double x) {
@@ -151,14 +274,18 @@ class Perceptron {
 		for (Map.Entry<Perceptron, Double> weight : this.weights.entrySet()) {
 			Perceptron p_next = weight.getKey();
 			this.error += NeuralNet.HiddenPDError(p_next.error, this.activation, weight.getValue());
-			// this.error += p_next.error * weight.getValue() * this.activation * (1 -
-			// this.activation);
 		}
 	}
 
 	public void UpdateWeightErrors() {
 		for (Perceptron input : this.inputs) {
 			this.weight_errors.put(input, this.error * input.activation);
+		}
+	}
+
+	public void AdjustWeights(double n) {
+		for (Perceptron input : this.inputs) {
+			input.SetWeight(this, input.GetWeight(this) - n * this.weight_errors.get(input));
 		}
 	}
 }
@@ -207,10 +334,6 @@ class Layer implements Iterable<Perceptron> {
 		}
 	}
 
-	public void SetBias(double newBias) {
-		this.bias.activation = newBias;
-	}
-
 	public int size() {
 		return this.nodes.size();
 	}
@@ -221,5 +344,11 @@ class Layer implements Iterable<Perceptron> {
 			errors.add(p.error);
 		}
 		return errors;
+	}
+
+	public void AdjustWeights(double n) {
+		for (Perceptron p : nodes) {
+			p.AdjustWeights(n);
+		}
 	}
 }
