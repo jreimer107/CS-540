@@ -16,9 +16,9 @@ class NeuralNet {
 		DecimalFormat df = new DecimalFormat("0.00000");
 
 		int arg_index = 1;
-		double[] output_errors = new double[output_layer.size()];
-		double[] hidden_errors = new double[hidden_layer.size()];
-		double[] input_errors = new double[input_layer.size()];
+		// double[] output_errors = new double[output_layer.size()];
+		// double[] hidden_errors = new double[hidden_layer.size()];
+		// double[] input_errors = new double[input_layer.size()];
 
 		// Arg parsing
 		for (Perceptron hidden : hidden_layer) {
@@ -38,18 +38,18 @@ class NeuralNet {
 		hidden_layer.UpdateActivations();
 		output_layer.UpdateActivations();
 
-		// Calculate errors on output nodes
-		for (int i = 0; i < output_layer.size(); i++) {
-			output_errors[i] = OutputPDError(Double.parseDouble(args[args.length - 1]), output_layer.get(i).activation);
+		// Set output errors based on expected values
+		for (Perceptron p : output_layer) {
+			p.error = OutputPDError(Double.parseDouble(args[args.length - 1]), p.activation);
 		}
 
-		// Calculate errors on hidden nodes
-		for (int i = 0; i < output_layer.size(); i++) {
-			for (int j = 0; j < hidden_layer.size(); j++) {
-				hidden_errors[j] += HiddenPDError(output_errors[i], hidden_layer.get(j).activation,
-						hidden_layer.get(j).GetWeight(output_layer.get(i)));
-			}
-		}
+		// Calculate activation errors
+		hidden_layer.UpdateErrors();
+		input_layer.UpdateErrors();
+
+		// Calculate Weight Errors
+		output_layer.UpdateWeightErrors();
+		hidden_layer.UpdateWeightErrors();
 
 		// Printing
 		if (flag == 100) {
@@ -60,74 +60,33 @@ class NeuralNet {
 			System.out.println(String.join(" ", hidden_activations));
 			System.out.println(df.format(output_layer.get(0).activation));
 		} else if (flag == 200) {
-			String[] output_errors_f = new String[output_errors.length];
-			for (int i = 0; i < output_errors.length; i++) {
-				output_errors_f[i] = df.format(output_errors[i]);
+			ArrayList<String> output_errors = new ArrayList<String>(output_layer.size());
+			for (Perceptron p : output_layer) {
+				output_errors.add(df.format(p.error));
 			}
-			System.out.println(String.join(" ", output_errors_f));
+			System.out.println(String.join(" ", output_errors));
 		} else if (flag == 300) {
-			String[] hidden_errors_f = new String[hidden_errors.length];
-			for (int i = 0; i < hidden_errors.length; i++) {
-				hidden_errors_f[i] = df.format(hidden_errors[i]);
+			ArrayList<String> hidden_errors = new ArrayList<String>(hidden_layer.size());
+			for (Perceptron p : hidden_layer) {
+				hidden_errors.add(df.format(p.error));
 			}
-			System.out.println(String.join(" ", hidden_errors_f));
+			System.out.println(String.join(" ", hidden_errors));
 		} else if (flag == 400) {
-
+			for (Perceptron output : output_layer) {
+				ArrayList<String> output_errors = new ArrayList<String>(hidden_layer.size());
+				for (Perceptron hidden : hidden_layer.All()) {
+					output_errors.add(df.format(output.weight_errors.get(hidden)));
+				}
+				System.out.println(String.join(" ", output_errors));
+			}
+			for (Perceptron hidden : hidden_layer) {
+				ArrayList<String> hidden_errors = new ArrayList<String>(input_layer.size());
+				for (Perceptron input : input_layer.All()) {
+					hidden_errors.add(df.format(hidden.weight_errors.get(input)));
+				}
+				System.out.println(String.join(" ", hidden_errors));
+			}
 		}
-
-		/*
-		 * // if (flag == 100) { // // Arg parsing // int arg_index = 1; // for
-		 * (Perceptron hidden : hidden_layer) { // for (Perceptron input :
-		 * input_layer.All()) { // input.SetWeight(hidden,
-		 * Double.parseDouble(args[arg_index++])); // } // } // for (Perceptron hidden :
-		 * hidden_layer.All()) { // hidden.SetWeight(output_layer.get(0),
-		 * Double.parseDouble(args[arg_index++])); // } // for (Perceptron input :
-		 * input_layer) { // input.SetActivation(Double.parseDouble(args[arg_index++]));
-		 * // }
-		 * 
-		 * // // Activation calculation // input_layer.UpdateActivations(); //
-		 * hidden_layer.UpdateActivations(); // output_layer.UpdateActivations(); //
-		 * ArrayList<String> hidden_activations = new //
-		 * ArrayList<String>(hidden_layer.size()); // for (Perceptron hidden :
-		 * hidden_layer) { // hidden_activations.add(df.format(hidden.activation)); // }
-		 * // System.out.println(String.join(" ", hidden_activations)); //
-		 * System.out.println(df.format(output_layer.get(0).activation)); // } else if
-		 * (flag == 200) { // // Arg parsing // int arg_index = 1; // for (Perceptron
-		 * hidden : hidden_layer) { // for (Perceptron input : input_layer.All()) { //
-		 * input.SetWeight(hidden, Double.parseDouble(args[arg_index++])); // } // } //
-		 * for (Perceptron hidden : hidden_layer.All()) { //
-		 * hidden.SetWeight(output_layer.get(0), Double.parseDouble(args[arg_index++]));
-		 * // } // for (Perceptron input : input_layer) { //
-		 * input.SetActivation(Double.parseDouble(args[arg_index++])); // }
-		 * 
-		 * // // Activation calculation // input_layer.UpdateActivations(); //
-		 * hidden_layer.UpdateActivations(); // output_layer.UpdateActivations(); //
-		 * double error = OutputPDError(Double.parseDouble(args[arg_index++]), //
-		 * output_layer.get(0).activation);
-		 * 
-		 * // System.out.println(df.format(error)); // } else if (flag == 300) { // //
-		 * Arg parsing // int arg_index = 1; // for (Perceptron hidden : hidden_layer) {
-		 * // for (Perceptron input : input_layer.All()) { // input.SetWeight(hidden,
-		 * Double.parseDouble(args[arg_index++])); // } // } // for (Perceptron hidden :
-		 * hidden_layer.All()) { // hidden.SetWeight(output_layer.get(0),
-		 * Double.parseDouble(args[arg_index++])); // } // for (Perceptron input :
-		 * input_layer) { // input.SetActivation(Double.parseDouble(args[arg_index++]));
-		 * // }
-		 * 
-		 * // // Activation calculation // input_layer.UpdateActivations(); //
-		 * hidden_layer.UpdateActivations(); // output_layer.UpdateActivations(); //
-		 * double output_error = OutputPDError(Double.parseDouble(args[arg_index++]), //
-		 * output_layer.get(0).activation);
-		 * 
-		 * // double[] hidden_errors = new double[hidden_layer.size()]; // String[]
-		 * hidden_error_formatted = new String[hidden_layer.size()]; // for (int i = 0;
-		 * i < hidden_layer.size(); i++) { // hidden_errors[i] =
-		 * HiddenPDError(output_error, // hidden_layer.get(i).activation, //
-		 * hidden_layer.get(i).GetWeight(output_layer.get(0))); //
-		 * hidden_error_formatted[i] = df.format(hidden_errors[i]); // } //
-		 * System.out.println(String.join(" ", hidden_error_formatted)); // }
-		 */
-
 	}
 
 	public static double sigmoid(double x) {
@@ -151,12 +110,14 @@ class Perceptron {
 	public double activation;
 	public double error;
 	private HashMap<Perceptron, Double> weights;
+	public HashMap<Perceptron, Double> weight_errors;
 	private HashSet<Perceptron> inputs;
 
 	public Perceptron() {
 		activation = 0.0;
 		error = 0.0;
 		weights = new HashMap<Perceptron, Double>();
+		weight_errors = new HashMap<Perceptron, Double>();
 		inputs = new HashSet<Perceptron>();
 	}
 
@@ -189,7 +150,15 @@ class Perceptron {
 		this.error = 0;
 		for (Map.Entry<Perceptron, Double> weight : this.weights.entrySet()) {
 			Perceptron p_next = weight.getKey();
-			this.error += NeuralNet.HiddenPDError(p_next.error, p_next.activation, weight.getValue());
+			this.error += NeuralNet.HiddenPDError(p_next.error, this.activation, weight.getValue());
+			// this.error += p_next.error * weight.getValue() * this.activation * (1 -
+			// this.activation);
+		}
+	}
+
+	public void UpdateWeightErrors() {
+		for (Perceptron input : this.inputs) {
+			this.weight_errors.put(input, this.error * input.activation);
 		}
 	}
 }
@@ -226,23 +195,16 @@ class Layer implements Iterable<Perceptron> {
 		}
 	}
 
-	// public void Link(Layer next) {
-	// for (Perceptron p : next) {
-	// bias.SetWeight(p, weight);
-	// }
-	// }
-
 	public void UpdateErrors() {
 		for (Perceptron p : this.All()) {
 			p.UpdateError();
 		}
-		// for (Perceptron p : this.All()) {
-		// p.error = 0;
-		// for (Perceptron p_next : next) {
-		// p.error += NeuralNet.HiddenPDError(p_next.error, p_next.activation,
-		// p.GetWeight(p_next));
-		// }
-		// }
+	}
+
+	public void UpdateWeightErrors() {
+		for (Perceptron p : nodes) {
+			p.UpdateWeightErrors();
+		}
 	}
 
 	public void SetBias(double newBias) {
@@ -251,5 +213,13 @@ class Layer implements Iterable<Perceptron> {
 
 	public int size() {
 		return this.nodes.size();
+	}
+
+	public ArrayList<Double> GetErrors() {
+		ArrayList<Double> errors = new ArrayList<Double>();
+		for (Perceptron p : this.All()) {
+			errors.add(p.error);
+		}
+		return errors;
 	}
 }
